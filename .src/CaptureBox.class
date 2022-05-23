@@ -1,0 +1,72 @@
+' Gambas class file
+
+iX As Integer
+iY As Integer
+iW As Integer
+iH As Integer
+
+Public Sub _New()
+
+  SpinBoxX.MaxValue = Desktop.Width
+  SpinBoxY.MaxValue = Desktop.Height
+  SpinBoxW.MaxValue = Desktop.Width
+  SpinBoxH.MaxValue = Desktop.Height
+
+  SpinBoxX.Value = Capture.iStartX
+  SpinBoxY.Value = Capture.iStartY
+  SpinBoxW.Value = Capture.iWidth
+  SpinBoxH.Value = Capture.iHeight
+
+End
+
+Public Sub Form_Open()
+
+  Application.ShowTooltips = True
+
+  iX = Capture.iStartX
+  iY = Capture.iStartY
+
+  If Capture.iWidth < 10 Then SpinBoxW.Value = 10
+  iW = Capture.iWidth
+
+  If Capture.iHeight < 10 Then SpinBoxH.Value = 10
+  iH = Capture.iHeight
+
+End
+
+Public Sub SpinBoxes_Change()
+
+  If Last.Value < 0 Then Last.Value = 0
+
+  Capture.iStartX = SpinBoxX.Value
+  Capture.iStartY = SpinBoxY.Value
+  Capture.iWidth = SpinBoxW.Value
+  Capture.iHeight = SpinBoxH.Value
+
+  Capture.DrawRectangle
+
+End
+
+Public Sub ButtonOK_Click()
+
+  Me.Close
+
+End
+
+Public Sub ButtonReset_Click()
+
+  Capture.iStartX = iX
+  Capture.iStartY = iY
+  Capture.iWidth = iW
+  Capture.iHeight = iH
+
+  Capture.DrawRectangle
+  'Me.Close
+
+End
+
+Public Sub Form_Close()
+
+  Application.ShowTooltips = False
+
+End

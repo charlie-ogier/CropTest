@@ -1,0 +1,20 @@
+' Gambas class file
+
+Public iCaptureData As Integer[]
+
+Public Sub Form_Open()
+
+  Me.x = 50
+  Me.Y = 50
+
+End
+
+Public Sub Button1_Click()
+
+  Dim hImage As Image
+
+  Capture.ShowModal
+
+  '  PictureBox1.Image = hImage.DrawImage(PictureBox1.Image,,,,, iCaptureData[0], iCaptureData[1], iCaptureData[2], iCaptureData[3])
+
+End

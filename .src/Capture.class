@@ -1,0 +1,241 @@
+' Gambas class file
+
+iStartX2 As Integer
+iStartY2 As Integer
+iDeltaX As Integer
+iDeltaY As Integer
+bResizing As Boolean
+bMoving As Boolean
+bStarted As Boolean
+iAllow As Integer = 15
+
+Public iStartX As Integer                                                                          'To store the mouse X start position
+Public iStartY As Integer                                                                          'To store the mouse Y start position.
+Public iWidth As Integer
+Public iHeight As Integer
+Public CurN As New Cursor(Picture.Load("CurN.png"))
+Public CurE As New Cursor(Picture.Load("CurE.png"))
+Public CurS As New Cursor(Picture.Load("CurS.png"))
+Public CurW As New Cursor(Picture.Load("CurW.png"))
+Public CurNE As New Cursor(Picture.Load("CurNE.png"))
+Public CurSE As New Cursor(Picture.Load("CurSE.png"))
+Public CurSW As New Cursor(Picture.Load("CurSW.png"))
+Public CurNW As New Cursor(Picture.Load("CurNW.png"))
+
+Public Sub Form_Open()
+
+  Message.Optional(("Close this box then draw a rectangular box with the mouse around the area you wish to capture. Press [Enter] to take the picture, [Esc] to escape.\nRight click for minor adjustments or use the arrow keys with and without the [Ctrl] key"), ("OK"), "capture2")
+  DrawingArea1.SetFocus
+
+End
+
+Public Sub DrawingArea1_MouseDown()                                                         'Runs when the user clicks the mouse
+
+  If bResizing = False Then
+    iStartX = Mouse.ScreenX                                                                   'Save the mouse X position
+    iStartY = Mouse.ScreenY                                                                   'Save the mouse Y position
+  Else
+    iStartX2 = iStartX + iWidth
+    iStartY2 = iStartY + iHeight
+
+    If bResizing = True And Mouse.Right = True Then
+      CaptureBox.ShowModal
+      bStarted = False
+      Return
+    Endif
+
+    ''User wants to move the Rectangle. The cursor is inside the rectangle
+    If Mouse.ScreenX < iStartX2 - iAllow And If Mouse.ScreenY < iStartY2 - iAllow And If Mouse.ScreenX > iStartX + iAllow And If Mouse.ScreenY > iStartY + iAllow Then
+      iDeltaX = Mouse.ScreenX - iStartX
+      iDeltaY = Mouse.ScreenY - iStartY
+      Last.Mouse = Mouse.SizeAll 'Mouse.Pointing
+      bMoving = True
+    Else
+      'Last.Mouse = Mouse.Default
+      bMoving = False
+    Endif
+  End If
+
+  bStarted = True
+
+End
+
+Public Sub Form_KeyPress()
+
+  Dim bNoCtrl As Boolean = True
+
+  If Key.Code = Key.Up And If Key.Control Then
+    Dec iHeight
+    bNoCtrl = False
+  End If
+
+  If Key.Code = Key.Left And If Key.Control Then
+    Dec iWidth
+    bNoCtrl = False
+  End If
+
+  If Key.Code = Key.Down And If Key.Control Then
+    Dec iHeight
+    Inc iStartY
+    bNoCtrl = False
+  End If
+
+  If Key.Code = Key.Right And If Key.Control Then
+    Dec iWidth
+    Inc iStartX
+    bNoCtrl = False
+  End If
+
+  If bNoCtrl = True Then
+    Select Case Key.Code
+      Case Key.Up
+        Inc iHeight
+        Dec iStartY
+      Case Key.Down
+        Inc iHeight
+      Case Key.Right
+        Inc iWidth
+      Case Key.Left
+        Inc iWidth
+        Dec iStartX
+    End Select
+  End If
+
+  If iWidth > Desktop.Width Then iWidth = Desktop.Width
+  If iHeight > Desktop.Height Then iHeight = Desktop.Height
+  If iStartX < 0 Then iStartX = 0
+  If iStartY < 0 Then iStartY = 0
+
+  DrawRectangle
+
+End
+
+Public Sub DrawingArea1_MouseDrag()                                                         'Runs when the mouse is dragged
+
+  If bResizing = False Then
+    iWidth = Mouse.ScreenX - iStartX
+    iHeight = Mouse.ScreenY - iStartY
+
+  Else If bMoving = True Then
+    iStartX = Mouse.ScreenX - iDeltaX
+    iStartY = Mouse.ScreenY - iDeltaY
+  Else
+
+    If Last.Cursor = CurW Then
+      iStartX = Mouse.ScreenX
+      iWidth = iStartX2 - Mouse.ScreenX
+
+    Else If Last.Cursor = CurN Then
+      iStartY = Mouse.Screeny
+      iHeight = iStartY2 - Mouse.Screeny
+
+    Else If Last.Cursor = CurS Then
+      iHeight = Mouse.ScreenY - iStartY
+
+    Else If Last.Cursor = CurE Then
+      iWidth = Mouse.ScreenX - iStartX
+
+    Else If Last.Cursor = CurNE Then
+      iStartY = Mouse.Screeny
+      iHeight = iStartY2 - Mouse.ScreenY
+      iWidth = Mouse.ScreenX - iStartX
+
+    Else If Last.Cursor = CurSE Then
+      iHeight = Mouse.ScreenY - iStartY
+      iWidth = Mouse.ScreenX - iStartX
+
+    Else If Last.Cursor = CurSW Then
+      iStartX = Mouse.ScreenX
+      iWidth = iStartX2 - Mouse.ScreenX
+      iHeight = Mouse.ScreenY - iStartY
+
+    Else If Last.Cursor = CurNW Then
+      iStartX = Mouse.ScreenX
+      iWidth = iStartX2 - Mouse.ScreenX
+      iStartY = Mouse.Screeny
+      iHeight = iStartY2 - Mouse.ScreenY
+    End If
+  End If
+
+  DrawRectangle
+
+End
+
+Public Sub DrawRectangle(Optional iLastCapture As Integer[])
+
+  DrawingArea1.Clear                                                                        'Clear the DrawingArea
+
+  Paint.Begin(DrawingArea1)                                                                 'Begin Paint
+  Paint.LineWidth = 3
+  If iWidth < 1 Then iWidth = 1
+  If iHeight < 1 Then iHeight = 1
+
+  If IsNull(iLastCapture) Then
+    Paint.Rectangle(iStartX - Me.Window.x, iStartY, iWidth, iHeight)                          'Create a rectangle
+  Else
+    Paint.Rectangle(iLastCapture[0], iLastCapture[1], iLastCapture[2], iLastCapture[3])       'Create a rectangle for repeat capture
+  Endif
+
+  Paint.Stroke                                                                              'Draws the retangle
+  Paint.End
+
+  Settings["lastcapture"] = [iStartX - Me.Window.x, iStartY, iWidth, iHeight]
+  Settings.Save
+
+  Paint.Begin(DrawingArea1)                                                                 'Begin Paint
+  Paint.LineWidth = 1
+  Paint.Text(Str(iWidth) & "W - " & Str(iHeight) & "H", (iStartX - Me.Window.x) + 5, iStartY + 15)
+  Paint.Fill
+  Paint.Stroke                                                                              'Draws the text
+  Paint.End
+
+End
+
+Public Sub DrawingArea1_MouseUp()
+
+  If bResizing = False Then bResizing = True
+
+End
+
+Public Sub DrawingArea1_KeyPress()
+
+  If Key.Code = Key.Esc Then
+    FMain.bEsc = True
+    Me.Close
+  Else
+    If Key.Code = Key.Enter Or Key.Code = Key.Return Then
+      FMain.iCaptureData = [iStartX, iStartY, iWidth, iHeight] 'Fill the iCaptureData array in FMain with the rectangle coordinates
+      Me.Close
+    End If
+  End If
+
+End
+
+Public Sub DrawingArea1_MouseMove()
+
+  If Mouse.Left Then Return
+
+  If bResizing Then
+    If Mouse.X <= iStartX + iAllow And Mouse.Y <= iStartY + iAllow Then
+      Last.Cursor = CurNW
+    Else If Mouse.X <= iStartX + iAllow And Mouse.Y >= (iHeight + iStartY) - iAllow
+      Last.Cursor = CurSW
+    Else If Mouse.Y <= iStartY + iAllow And Mouse.X >= (iWidth + iStartX) - iAllow
+      Last.Cursor = CurNE
+    Else If Mouse.Y >= (iHeight + iStartY) - iAllow And Mouse.X >= (iWidth + iStartX) - iAllow
+      Last.Cursor = CurSE
+    Else If Mouse.x <= iStartX + iAllow Then
+      Last.Cursor = CurW
+    Else If Mouse.Y <= iStartY + iAllow Then
+      Last.Cursor = CurN
+    Else If Mouse.Y >= (iHeight + iStartY) - iAllow Then
+      Last.Cursor = CurS
+    Else If Mouse.X >= (iWidth + iStartX) - iAllow Then
+      Last.Cursor = CurE
+    Else
+      Last.Cursor = Null
+      Last.Mouse = Mouse.Pointing 'Mouse.SizeAll
+    Endif
+  End If
+
+End
